@@ -1,0 +1,79 @@
+
+"""
+Program importing Titanic data and preparing for ML algorithm
+
+"""
+
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+import missingno as msno
+
+
+
+
+
+
+
+
+#reading file
+df = pd.read_csv('train.csv').head(100)
+
+
+
+#crating a list of venues to spend money
+types = df.dtypes
+numeric_types = types[types=='float64'].drop('Age').index
+
+#plotting spending for passengers by venue
+for i in numeric_types:
+    df.plot.scatter(x='Age', y=i)
+
+# plotting spending for passengers in CryoSleep (all are zeros):
+df_cryo_sleep  = df[df['CryoSleep']==True]
+for i in numeric_types:
+    plot_title = "Passengers in 'CryoSleep' state spending in " + i
+    df_cryo_sleep.plot.scatter(x='Age', y=i, ylim = (0, 100), title=plot_title) 
+
+
+
+#filling CryoSleeping passengers spendings to zero 
+df.loc[(df['CryoSleep']==True), numeric_types] = 0
+
+
+
+#mean spendings in venues based on age:
+ages = df['Age'].dropna().unique()
+ages = (np.sort(ages))
+ages_expenses = pd.DataFrame({}, index = ages[:-1])
+
+
+
+for i in numeric_types:
+    ages_expenses[i]=0
+    df[i] = df[i].astype(float)
+
+
+
+for current_age in ages:
+    print('\n')
+    df_current_age = df[df['Age']== current_age]
+    
+    for current_num_type in numeric_types:
+        print((df_current_age[current_num_type].mean()))
+        mean_spending = int(df_current_age[current_num_type].mean(skipna = True))
+        print('For age ' + str(current_age) + ' in ' + current_num_type +
+              ' mean spending is: ' + str(mean_spending))
+        ages_expenses.loc[current_age, current_num_type] = mean_spending
+    
+    
+#creating mean spendings for groups based on age:
+ages_spending_groups = [0, 14, 24, 34, 44, 54, 56, 66, 200]
+rows_number = len(ages_spending_groups)
+columns_number = len(numeric_types)
+
+
+data_df_spending_by_age_groups = pd.DataFrame(np.zeros((rows_number, 
+                                                        columns_number)), 
+                                              columns=numeric_types, 
+                                              index=ages_spending_groups)
