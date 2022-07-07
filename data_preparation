@@ -11,17 +11,12 @@ import missingno as msno
 
 
 
-
-
-
-
-
 #reading file
 df = pd.read_csv('train.csv').head(100)
 
 
 
-#crating a list of venues to spend money
+#creating a list of venues to spend money in
 types = df.dtypes
 numeric_types = types[types=='float64'].drop('Age').index
 
@@ -41,7 +36,7 @@ for i in numeric_types:
 df.loc[(df['CryoSleep']==True), numeric_types] = 0
 
 
-
+# FILTER THE ZEROS!!!!!!
 #mean spendings in venues based on age:
 ages = df['Age'].dropna().unique()
 ages = (np.sort(ages))
@@ -57,11 +52,12 @@ for i in numeric_types:
 
 for current_age in ages:
     print('\n')
-    df_current_age = df[df['Age']== current_age]
+    df_current_age = df[df['Age'] == current_age]
     
     for current_num_type in numeric_types:
         print((df_current_age[current_num_type].mean()))
-        mean_spending = int(df_current_age[current_num_type].mean(skipna = True))
+        mean_spending = int(df_current_age[current_num_type].mean(
+            skipna = True))
         print('For age ' + str(current_age) + ' in ' + current_num_type +
               ' mean spending is: ' + str(mean_spending))
         ages_expenses.loc[current_age, current_num_type] = mean_spending
@@ -73,7 +69,9 @@ rows_number = len(ages_spending_groups)
 columns_number = len(numeric_types)
 
 
-data_df_spending_by_age_groups = pd.DataFrame(np.zeros((rows_number, 
-                                                        columns_number)), 
-                                              columns=numeric_types, 
-                                              index=ages_spending_groups)
+data_df_spending_by_age_groups = pd.DataFrame(
+    np.zeros((rows_number, columns_number)), columns = numeric_types, 
+    index = ages_spending_groups)
+
+
+
