@@ -54,7 +54,7 @@ df.loc[df_nan_sleep.index, :] = df_nan_sleep[:]
 #mean spendings in venues based on age:
 ages = df['Age'].dropna().unique()
 ages = np.sort(ages)
-ages_expenses = pd.DataFrame({}, index = ages[:-1])
+ages_expenses = pd.DataFrame({}, index = ages)
 
 
 
@@ -75,6 +75,9 @@ for current_age in ages:
         continue
     for current_num_type in numeric_types:
         print((df_current_age[current_num_type].mean()))
+        if df_current_age[current_num_type].isnull().all():
+            # skip calculating the mean if the is no data
+            continue
         mean_spending = int(df_current_age[current_num_type].mean(
             skipna = True))
         print('For age ' + str(current_age) + ' in ' + current_num_type +
@@ -83,7 +86,7 @@ for current_age in ages:
     
     
 #creating mean spendings for groups based on age:
-ages_spending_groups = [0, 14, 24, 34, 44, 54, 56, 66, 200]
+ages_spending_groups = [0, 13, 23, 33, 43, 53, 53, 63, 200]
 rows_number = len(ages_spending_groups)
 columns_number = len(numeric_types)
 
@@ -92,6 +95,21 @@ data_df_spending_by_age_groups = pd.DataFrame(
     np.zeros((rows_number, columns_number)), columns = numeric_types, 
     index = ages_spending_groups)
 
+ages_expenses.reset_index(inplace=True)
+ages_expenses = ages_expenses.rename(columns = {'index':'Age'})
+for i in range(len(ages_spending_groups) - 1):
+    beginning_of_age_range = ages_spending_groups[i]
+    ending_of_age_range = ages_spending_groups[i+1]
+    df_temp_age_range = ages_expenses[(ages_expenses['Age'] >= beginning_of_age_range)
+                                       & (ages_expenses['Age'] < ending_of_age_range)]
+    for numeric_type in numeric_types: 
+        temp_mean = df_temp_age_range[numeric_type].mean()
+        data_df_spending_by_age_groups.at[beginning_of_age_range, numeric_type] = temp_mean
+    
 
 
-# zrob to wszystko tez dla testowego datasetu 
+
+
+
+
+# TODO: apply it to test dataset
