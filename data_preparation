@@ -11,20 +11,24 @@ import missingno as msno
 
 
 
-#reading file
-df = pd.read_csv('train.csv').head(100)
+# reading file
+df = pd.read_csv('train.csv').head(300)
 
 
 
-#creating a list of venues to spend money in
+# creating a list of venues to spend money in
 types = df.dtypes
 numeric_types = types[types=='float64'].drop('Age').index
+
+
+# adding SpendingSum column to df
+df['SpendingsSum'] = df[numeric_types].sum(axis = 1)
 
 #plotting spending for passengers by venue
 for i in numeric_types:
     df.plot.scatter(x='Age', y=i)
 
-# plotting spending for passengers in CryoSleep (all are zeros):
+# plotting spendings for passengers in CryoSleep (all are zeros):
 df_cryo_sleep  = df[df['CryoSleep']==True]
 for i in numeric_types:
     plot_title = "Passengers in 'CryoSleep' state spending in " + i
@@ -32,14 +36,24 @@ for i in numeric_types:
 
 
 
-#filling CryoSleeping passengers spendings to zero 
+# filling CryoSleeping passengers spendings to zero 
 df.loc[(df['CryoSleep']==True), numeric_types] = 0
 
 
-# FILTER THE ZEROS!!!!!!
+# Filling passengers 'CryoSleep' NaNs Based on spendings 
+# (no spendings - 'CryoSllep' is True, some spendings - 'CryoSleep' is False )
+df_nan_sleep = df[df['CryoSleep'].isna()]
+df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] > 0), 'CryoSleep'] = False
+df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] <= 0), 'CryoSleep'] = True
+df.loc[df_nan_sleep.index, :] = df_nan_sleep[:] 
+
+
+
+
+
 #mean spendings in venues based on age:
 ages = df['Age'].dropna().unique()
-ages = (np.sort(ages))
+ages = np.sort(ages)
 ages_expenses = pd.DataFrame({}, index = ages[:-1])
 
 
@@ -50,10 +64,15 @@ for i in numeric_types:
 
 
 
+# Creating Spending Mean 
+
 for current_age in ages:
     print('\n')
-    df_current_age = df[df['Age'] == current_age]
-    
+    df_current_age = df[((df['Age'] == current_age) & 
+                         (df['CryoSleep']== False))]
+    print(df_current_age.head(3))
+    if df_current_age.empty:
+        continue
     for current_num_type in numeric_types:
         print((df_current_age[current_num_type].mean()))
         mean_spending = int(df_current_age[current_num_type].mean(
@@ -75,3 +94,4 @@ data_df_spending_by_age_groups = pd.DataFrame(
 
 
 
+# zrob to wszystko tez dla testowego datasetu 
