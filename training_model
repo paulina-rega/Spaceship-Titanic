@@ -1,0 +1,110 @@
+import pandas as pd
+from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+from sklearn import tree
+import matplotlib.pyplot as plt
+
+
+def average(num_list):
+    avg = sum(num_list) / len(num_list)
+    return avg
+
+df = pd.read_csv('train_set_processed.csv')
+df_test = pd.read_csv('test_set_processed.csv')
+
+
+
+# normalization
+
+
+
+
+bool_columns_to_encode = list(df.select_dtypes(include='bool').columns)
+
+df.loc[:, bool_columns_to_encode] = (
+    df.loc[:,bool_columns_to_encode] == True).astype(int)
+
+
+bool_columns_to_encode = list(df_test.select_dtypes(include='bool').columns)
+
+df_test.loc[:, bool_columns_to_encode] = (
+    df_test.loc[:,bool_columns_to_encode] == True).astype(int)
+
+
+Y = df['Transported']
+X = df.drop(['PassengerId', 'Transported'], axis = 1)
+
+
+
+
+columns_to_encode = list(X.select_dtypes(include='object').columns)
+
+for col in columns_to_encode:
+    one_hot = pd.get_dummies(X[col], prefix=col)
+    X = X.drop(col, axis=1)
+    X = X.join(one_hot)
+    
+
+
+
+X_test = df_test.drop(['PassengerId'], axis = 1)
+
+for col in columns_to_encode:
+    one_hot = pd.get_dummies(X_test[col], prefix=col)
+    X_test = X_test.drop(col, axis=1)
+    X_test = X_test.join(one_hot)
+    
+    
+
+
+
+
+classifier = DecisionTreeClassifier(random_state=0, max_depth=2)
+classifier.fit(X, Y)
+mean_average = average(cross_val_score(classifier, X, Y, cv=10))
+print("Mean average accuracy: {}".format(mean_average))
+
+
+prediction = classifier.predict(X_test)
+
+
+
+
+passenger_id = pd.read_csv("test.csv")['PassengerId'].to_frame()
+prediction = pd.Series(prediction).rename('Transported').astype(bool)
+submission = passenger_id.join(prediction)
+
+
+submission.to_csv('kaggle_submission.csv', index=False)
+
+
+#while True:
+#    dropped_column_mean_average = []
+#    columns = list(X.columns)
+#    for column_to_remove in columns:
+#        X_dropped_col = X.drop(column_to_remove, axis=1)
+#        temp_mean_average = average(cross_val_score(classifier, X_dropped_col, 
+#                                                    Y, cv=10))
+#        if temp_mean_average >= mean_average:
+#            dropped_column_mean_average.append([column_to_remove, temp_mean_average])
+#
+#    if dropped_column_mean_average == []:
+#        break
+#    else:
+#        dropped_column_mean_average = np.array(dropped_column_mean_average)
+#        dropped_column_mean_average[:,1] = dropped_column_mean_average[:,1].astype(float)
+#        dropped_column_mean_average = dropped_column_mean_average[dropped_column_mean_average[:,1].argsort()]
+#        col_name_to_remove =  dropped_column_mean_average[-1][0]
+#        X = X.drop(col_name_to_remove, axis = 1)
+#        mean_average = temp_mean_average
+        
+        
+        
+
+
+
+
+
+
+
