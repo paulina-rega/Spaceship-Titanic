@@ -3,53 +3,66 @@
 Program importing Titanic data and preparing for ML algorithm
 
 """
-
+# Importing libraries 
 import pandas as pd
 import numpy as np
-from matplotlib import pyplot as plt
-import missingno as msno
 
-
-
-# reading file
+# Reading file:
 df = pd.read_csv('train.csv')
 
 
-def find_common_value(df, column):
-    common_value = df[column].mode()[0]
+def find_common_value(col_name):
+    '''takes pd.Series and finds most common value'''
+    common_value = col_name.value_counts().index[0]
     return common_value
 
 
-common_home_planet = find_common_value(df, 'HomePlanet')
-common_destination = find_common_value(df, 'Destination')
+def fill_nan_with_common_value(col):
+    common_value = find_common_value(col)
+    col.fillna(common_value, inplace = True)
+    return col
 
 
+def add_column_if_value_is_missed(df, category):
+    new_column_name = 'is' + category + 'Known'
+    df[new_column_name] = df[category].notnull()
+    return df
+
+# Filling 'HomePlanet', 'Destination', 'VIP', 'Age' NaNs with common values:
+    
+categorical_value_to_fill = ['HomePlanet', 'Destination', 'VIP', 'Age']
+
+for category in categorical_value_to_fill:
+    df = add_column_if_value_is_missed(df, category)
+    df[category] = fill_nan_with_common_value(df[category])
+   
 
 
+# Dropping cabin and name column
+columns_to_drop = ['Cabin', 'Name', 'PassengerId']
+df = df.drop(columns = columns_to_drop)
 
-# creating a list of venues to spend money in
+# Creating a list of venues to spend money in
 types = df.dtypes
 numeric_types = types[types=='float64'].drop('Age').index
 
-
-# adding SpendingSum column to df
+# Adding SpendingSum column to df
 df['SpendingsSum'] = df[numeric_types].sum(axis = 1)
 
-#plotting spending for passengers by venue
+# Plotting spending for passengers by venue
 for i in numeric_types:
-    df.plot.scatter(x='Age', y=i)
+    df.plot.scatter(x = 'Age', y = i)
 
-# plotting spendings for passengers in CryoSleep (all are zeros):
-df_cryo_sleep  = df[df['CryoSleep']==True]
+
+#–-----------------------------------------------------------------------------
+# ---------------------Handling 'CryoSleep' Nans-------------------------------
+
+# Plotting spendings for passengers in CryoSleep (all are zeros):
+df_cryo_sleep  = df[df['CryoSleep'] == True]
 for i in numeric_types:
     plot_title = "Passengers in 'CryoSleep' state spending in " + i
-    df_cryo_sleep.plot.scatter(x='Age', y=i, ylim = (0, 100), title=plot_title) 
-
-
-
-# filling CryoSleeping passengers spendings to zero 
-df.loc[(df['CryoSleep']==True), numeric_types] = df.loc[(df['CryoSleep']==True), numeric_types].fillna(0)
-
+    df_cryo_sleep.plot.scatter(
+        x = 'Age', y = i, ylim = (0, 100), title = plot_title) 
 
 # Filling passengers 'CryoSleep' NaNs Based on spendings 
 # (no spendings - 'CryoSllep' is True, some spendings - 'CryoSleep' is False )
@@ -57,85 +70,68 @@ df_nan_sleep = df[df['CryoSleep'].isna()]
 df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] > 0), 'CryoSleep'] = False
 df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] <= 0), 'CryoSleep'] = True
 df.loc[df_nan_sleep.index, :] = df_nan_sleep[:] 
-
-
-
-def find_common_value(df, column):
-    common_value = df[column].mode()
-    return common_value
     
+# Filling 'CryoSleep' == True passengers spendings to zero 
+df.update(df.loc[(df['CryoSleep']==True), numeric_types].fillna(0))
 
-
-
-
-#median spendings in venues based on age:
+# Creating df of median spendings in venues based on age:
 ages = df['Age'].dropna().unique()
 ages = np.sort(ages)
 ages_expenses = pd.DataFrame({}, index = ages)
 
-
-
 for i in numeric_types:
     ages_expenses[i]=0
     df[i] = df[i].astype(float)
+#–-----------------------------------------------------------------------------
+# ---------------------Handling Spending NaNs----------------------------------
 
-
-
-# Creating Spending median 
+# Calculating median spendings for groups based on age:
 
 for current_age in ages:
-    print('\n')
-    df_current_age = df[((df['Age'] == current_age) & 
-                         (df['CryoSleep']== False))]
-    print(df_current_age.head(3))
+    df_current_age = df[
+        ((df['Age'] == current_age) & (df['CryoSleep'] == False))]
     if df_current_age.empty:
         continue
     for current_num_type in numeric_types:
-        print((df_current_age[current_num_type].median()))
         if df_current_age[current_num_type].isnull().all():
-            # skip calculating the median if the is no data
+            # Skip calculating the median if the is no data
             continue
         median_spending = int(df_current_age[current_num_type].median(
             skipna = True))
-        print('For age ' + str(current_age) + ' in ' + current_num_type +
-              ' median spending is: ' + str(median_spending))
         ages_expenses.loc[current_age, current_num_type] = median_spending
     
-    
-#creating median spendings for groups based on age:
 ages_spending_groups = [0, 13, 20, 30, 40, 50, 60, 200]
 rows_number = len(ages_spending_groups)
 columns_number = len(numeric_types)
-
 
 df_spending_by_age_groups = pd.DataFrame(
     np.zeros((rows_number, columns_number)), columns = numeric_types, 
     index = ages_spending_groups)
 
-ages_expenses.reset_index(inplace=True)
+ages_expenses.reset_index(inplace = True)
 ages_expenses = ages_expenses.rename(columns = {'index':'Age'})
+
 for i in range(len(ages_spending_groups) - 1):
     beginning_of_age_range = ages_spending_groups[i]
     ending_of_age_range = ages_spending_groups[i+1]
-    df_temp_age_range = ages_expenses[(ages_expenses['Age'] >= beginning_of_age_range)
-                                       & (ages_expenses['Age'] < ending_of_age_range)]
+    df_temp_age_range = ages_expenses[
+        (ages_expenses['Age'] >= beginning_of_age_range) &
+        (ages_expenses['Age'] < ending_of_age_range)]
     for numeric_type in numeric_types: 
         temp_median = df_temp_age_range[numeric_type].median()
-        df_spending_by_age_groups.at[beginning_of_age_range, numeric_type] = temp_median
+        df_spending_by_age_groups.at[
+            beginning_of_age_range, numeric_type] = temp_median
+
         
-        
-        
-        
-        
+# Filling remainging NaNs in spending (based on median spending by age grop)
+num_ranges = len(ages_spending_groups)
 
-# filling remainging NaNs in spending (based on median spending by age grop)
-
-    
-
-
-
-
-
-
-
-# TODO: apply it to test dataset
+for numeric_type in numeric_types:
+    df_numeric_type = df.loc[df[numeric_type].isnull()]
+    for age in range(1, num_ranges):
+        current_range_max_age = ages_spending_groups[age - 1]
+        median_spending = df_spending_by_age_groups.at[
+            current_range_max_age, numeric_type]
+        df.update(df.loc[
+            (df['Age'] >= current_range_max_age), numeric_type].fillna(
+                median_spending))
