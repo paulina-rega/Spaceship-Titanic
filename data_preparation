@@ -15,6 +15,17 @@ import missingno as msno
 df = pd.read_csv('train.csv')
 
 
+def find_common_value(df, column):
+    common_value = df[column].mode()[0]
+    return common_value
+
+
+common_home_planet = find_common_value(df, 'HomePlanet')
+common_destination = find_common_value(df, 'Destination')
+
+
+
+
 
 # creating a list of venues to spend money in
 types = df.dtypes
@@ -37,7 +48,7 @@ for i in numeric_types:
 
 
 # filling CryoSleeping passengers spendings to zero 
-df.loc[(df['CryoSleep']==True), numeric_types] = 0
+df.loc[(df['CryoSleep']==True), numeric_types] = df.loc[(df['CryoSleep']==True), numeric_types].fillna(0)
 
 
 # Filling passengers 'CryoSleep' NaNs Based on spendings 
@@ -49,9 +60,15 @@ df.loc[df_nan_sleep.index, :] = df_nan_sleep[:]
 
 
 
+def find_common_value(df, column):
+    common_value = df[column].mode()
+    return common_value
+    
 
 
-#mean spendings in venues based on age:
+
+
+#median spendings in venues based on age:
 ages = df['Age'].dropna().unique()
 ages = np.sort(ages)
 ages_expenses = pd.DataFrame({}, index = ages)
@@ -64,7 +81,7 @@ for i in numeric_types:
 
 
 
-# Creating Spending Mean 
+# Creating Spending median 
 
 for current_age in ages:
     print('\n')
@@ -74,24 +91,24 @@ for current_age in ages:
     if df_current_age.empty:
         continue
     for current_num_type in numeric_types:
-        print((df_current_age[current_num_type].mean()))
+        print((df_current_age[current_num_type].median()))
         if df_current_age[current_num_type].isnull().all():
-            # skip calculating the mean if the is no data
+            # skip calculating the median if the is no data
             continue
-        mean_spending = int(df_current_age[current_num_type].mean(
+        median_spending = int(df_current_age[current_num_type].median(
             skipna = True))
         print('For age ' + str(current_age) + ' in ' + current_num_type +
-              ' mean spending is: ' + str(mean_spending))
-        ages_expenses.loc[current_age, current_num_type] = mean_spending
+              ' median spending is: ' + str(median_spending))
+        ages_expenses.loc[current_age, current_num_type] = median_spending
     
     
-#creating mean spendings for groups based on age:
+#creating median spendings for groups based on age:
 ages_spending_groups = [0, 13, 20, 30, 40, 50, 60, 200]
 rows_number = len(ages_spending_groups)
 columns_number = len(numeric_types)
 
 
-data_df_spending_by_age_groups = pd.DataFrame(
+df_spending_by_age_groups = pd.DataFrame(
     np.zeros((rows_number, columns_number)), columns = numeric_types, 
     index = ages_spending_groups)
 
@@ -103,12 +120,18 @@ for i in range(len(ages_spending_groups) - 1):
     df_temp_age_range = ages_expenses[(ages_expenses['Age'] >= beginning_of_age_range)
                                        & (ages_expenses['Age'] < ending_of_age_range)]
     for numeric_type in numeric_types: 
-        temp_mean = df_temp_age_range[numeric_type].mean()
-        data_df_spending_by_age_groups.at[beginning_of_age_range, numeric_type] = temp_mean
+        temp_median = df_temp_age_range[numeric_type].median()
+        df_spending_by_age_groups.at[beginning_of_age_range, numeric_type] = temp_median
+        
+        
+        
+        
+        
+
+# filling remainging NaNs in spending (based on median spending by age grop)
+
     
-    
-# fill NaNs from spending
-# Check why the are still NaNs in CryoSleep=True Spending
+
 
 
 
