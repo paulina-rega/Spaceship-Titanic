@@ -9,6 +9,7 @@ import numpy as np
 
 # Reading file:
 df = pd.read_csv('train.csv')
+df2 = pd.read_csv('test.csv')
 
 
 def find_common_value(col_name):
@@ -17,8 +18,7 @@ def find_common_value(col_name):
     return common_value
 
 
-def fill_nan_with_common_value(col):
-    common_value = find_common_value(col)
+def fill_nan_with_common_value(col, common_value):
     col.fillna(common_value, inplace = True)
     return col
 
@@ -34,13 +34,16 @@ categorical_value_to_fill = ['HomePlanet', 'Destination', 'VIP', 'Age']
 
 for category in categorical_value_to_fill:
     df = add_column_if_value_is_missed(df, category)
-    df[category] = fill_nan_with_common_value(df[category])
-   
+    df2 = add_column_if_value_is_missed(df2, category)
+    common_value = find_common_value(df[category])
+    df[category] = fill_nan_with_common_value(df[category], common_value)
+    df2[category] = fill_nan_with_common_value(df[category], common_value)
 
 
 # Dropping cabin and name column
 columns_to_drop = ['Cabin', 'Name', 'PassengerId']
 df = df.drop(columns = columns_to_drop)
+df2 = df2.drop(columns = columns_to_drop)
 
 # Creating a list of venues to spend money in
 types = df.dtypes
@@ -48,6 +51,7 @@ numeric_types = types[types=='float64'].drop('Age').index
 
 # Adding SpendingSum column to df
 df['SpendingsSum'] = df[numeric_types].sum(axis = 1)
+df2['SpendingsSum'] = df2[numeric_types].sum(axis = 1)
 
 # Plotting spending for passengers by venue
 for i in numeric_types:
@@ -70,6 +74,9 @@ df_nan_sleep = df[df['CryoSleep'].isna()]
 df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] > 0), 'CryoSleep'] = False
 df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] <= 0), 'CryoSleep'] = True
 df.loc[df_nan_sleep.index, :] = df_nan_sleep[:] 
+
+
+
     
 # Filling 'CryoSleep' == True passengers spendings to zero 
 df.update(df.loc[(df['CryoSleep']==True), numeric_types].fillna(0))
@@ -135,3 +142,6 @@ for numeric_type in numeric_types:
         df.update(df.loc[
             (df['Age'] >= current_range_max_age), numeric_type].fillna(
                 median_spending))
+                
+                
+               
