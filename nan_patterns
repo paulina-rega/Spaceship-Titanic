@@ -8,11 +8,15 @@ import numpy as np
 
 # Reading train file:
 df = pd.read_csv('train.csv')
+df2 = pd.read_csv('test.csv')
 
 # Cabin - The cabin number where the passenger is staying. 
 # Takes the form deck/num/side, 
 # where side can be either P for Port or S for Starboard.
 
+
+
+#-----HANDLING MISSING HOMEPLANET DATA BY ASSIGNING SAME PLANET BASED ON GROUP
 
 def split_cabin_data (df):
     df['Cabin'] = df['Cabin'].astype(str)
@@ -29,25 +33,25 @@ def add_group_number (df):
 
 df = split_cabin_data(df)
 df = add_group_number(df)
+df2 = split_cabin_data(df2)
+df2 = add_group_number(df2)
 
-
-# na podstaiwe grup wypełnij homeplanet
-#zrob liste grup i homeplanety dla nich 
 homeplanet_group = df.loc[
     :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
 
+print
+print(df.isnull().sum())
+print(df2.isnull().sum())
 
-def find_home_planet(x):
-    print(homeplanet_group['Group'] == x)
-   # homeplanet_group[homeplanet_group['Group'] == group]['HomePlanet']
 
 def fill_HomePlanet_by_group (df):
     for index, row in df.iterrows():
-        print(row['Group'])
         group = row['Group']
-        if group in homeplanet_group['Group'].to_list():
-            print('lol' +row.at[index,'HomePlanet'])
-            row.at[index,'HomePlanet'] = homeplanet_group[homeplanet_group['Group'] == group]['HomePlanet']
+        group_list = homeplanet_group['Group'].to_list()
+        if group in group_list:
+            new_home_planet = homeplanet_group.loc[
+                homeplanet_group['Group'] == group].iloc[0]['HomePlanet']
+            df.at[index, 'HomePlanet'] = new_home_planet
         else:
             continue
     return df
@@ -56,6 +60,17 @@ def fill_HomePlanet_by_group (df):
 df_homeplanet_na = df.loc[df['HomePlanet'].isna()]
 df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
 
+
+# Check why df2 HomePlanet if not filled
+df2_homeplanet_na = df2.loc[df2['HomePlanet'].isna()]
+df2.loc[df2['HomePlanet'].isna()] = fill_HomePlanet_by_group(df2_homeplanet_na)
+
+
+print(df.isnull().sum())
+print(df2.isnull().sum())
+
+
+#-----------------------------------------------------
 
 
 
