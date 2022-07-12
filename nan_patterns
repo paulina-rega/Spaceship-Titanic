@@ -1,0 +1,61 @@
+"""
+Program importing Titanic data and visualising to see patterns to fill NaNs
+
+"""
+# Importing libraries 
+import pandas as pd
+import numpy as np
+
+# Reading train file:
+df = pd.read_csv('train.csv')
+
+# Cabin - The cabin number where the passenger is staying. 
+# Takes the form deck/num/side, 
+# where side can be either P for Port or S for Starboard.
+
+
+def split_cabin_data (df):
+    df['Cabin'] = df['Cabin'].astype(str)
+    df['DeckNo'] = df['Cabin'].apply(lambda x: x[0] if x !='nan' else np.NaN)
+    df['CabinNo'] = df['Cabin'].apply(
+        lambda x: x[2:-2] if x !='nan' else np.NaN)
+    df['Port'] = df['Cabin'].apply(lambda x: x[-1] if x !='nan' else np.NaN)
+    df.drop(columns = 'Cabin', inplace = True)
+    return df
+
+def add_group_number (df):
+    df['Group'] = df['PassengerId'].apply(lambda x: x[:4])
+    return df
+
+df = split_cabin_data(df)
+df = add_group_number(df)
+
+
+# na podstaiwe grup wypełnij homeplanet
+#zrob liste grup i homeplanety dla nich 
+homeplanet_group = df.loc[
+    :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
+
+
+def find_home_planet(x):
+    print(homeplanet_group['Group'] == x)
+   # homeplanet_group[homeplanet_group['Group'] == group]['HomePlanet']
+
+def fill_HomePlanet_by_group (df):
+    for index, row in df.iterrows():
+        print(row['Group'])
+        group = row['Group']
+        if group in homeplanet_group['Group'].to_list():
+            print('lol' +row.at[index,'HomePlanet'])
+            row.at[index,'HomePlanet'] = homeplanet_group[homeplanet_group['Group'] == group]['HomePlanet']
+        else:
+            continue
+    return df
+
+
+df_homeplanet_na = df.loc[df['HomePlanet'].isna()]
+df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
+
+
+
+
