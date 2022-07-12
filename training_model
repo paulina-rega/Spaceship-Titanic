@@ -4,6 +4,10 @@ from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 from sklearn import tree
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+from sklearn.feature_selection import SelectFromModel
 
 
 def average(num_list):
@@ -15,7 +19,7 @@ df_test = pd.read_csv('test_set_processed.csv')
 
 
 
-# normalization
+# add normalization
 
 
 
@@ -48,63 +52,60 @@ for col in columns_to_encode:
 
 
 
-X_test = df_test.drop(['PassengerId'], axis = 1)
+X_kaggle_test = df_test.drop(['PassengerId'], axis = 1)
 
 for col in columns_to_encode:
-    one_hot = pd.get_dummies(X_test[col], prefix=col)
-    X_test = X_test.drop(col, axis=1)
-    X_test = X_test.join(one_hot)
+    one_hot = pd.get_dummies(X_kaggle_test[col], prefix=col)
+    X_kaggle_test = X_kaggle_test.drop(col, axis=1)
+    X_kaggle_test = X_kaggle_test.join(one_hot)
     
     
+# traingin model withouth choosing parameters
 
 
 
-
-classifier = DecisionTreeClassifier(random_state=0, max_depth=2)
-classifier.fit(X, Y)
-mean_average = average(cross_val_score(classifier, X, Y, cv=10))
-print("Mean average accuracy: {}".format(mean_average))
-
-
-prediction = classifier.predict(X_test)
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size = 0.3)
+clf = RandomForestClassifier(n_estimators = 100, random_state = 1, n_jobs = -1)
+clf.fit(x_train, y_train)
 
 
 
+y_pred = clf.predict(x_test)
 
-passenger_id = pd.read_csv("test.csv")['PassengerId'].to_frame()
-prediction = pd.Series(prediction).rename('Transported').astype(bool)
-submission = passenger_id.join(prediction)
+print('Accuracy (without choosing parameters): {}'.format(
+    metrics.accuracy_score(y_test, y_pred)))
+
+
+
+labels = list(x_train.columns)
+sfm = SelectFromModel(clf, threshold=0.02)
+sfm.fit(x_train, y_train)
+
+x_important_train = sfm.transform(x_train)
+x_important_test = sfm.transform(x_test)
+
+
+clf_important = RandomForestClassifier(n_estimators=100, random_state = 1, 
+                                       n_jobs =-1)
+clf_important.fit(x_important_train, y_train)
+
+y_important_pred = clf_important.predict(x_important_test)
+
+
+#
+print('Accuracy (chosen parameters with highest importance): {}'.format(
+    metrics.accuracy_score(y_important_pred, y_pred)))
+
+
+x_kaggle_test = sfm.transform(X_kaggle_test)
+
+
+y_kaggle_pred = clf.predict(X_kaggle_test)
+passenger_id = pd.read_csv('test.csv')['PassengerId'].to_frame()
+y_kaggle_pred = pd.Series(y_kaggle_pred).rename('Transported').astype(bool)
+
+
+submission = passenger_id.join(y_kaggle_pred)
 
 
 submission.to_csv('kaggle_submission.csv', index=False)
-
-
-#while True:
-#    dropped_column_mean_average = []
-#    columns = list(X.columns)
-#    for column_to_remove in columns:
-#        X_dropped_col = X.drop(column_to_remove, axis=1)
-#        temp_mean_average = average(cross_val_score(classifier, X_dropped_col, 
-#                                                    Y, cv=10))
-#        if temp_mean_average >= mean_average:
-#            dropped_column_mean_average.append([column_to_remove, temp_mean_average])
-#
-#    if dropped_column_mean_average == []:
-#        break
-#    else:
-#        dropped_column_mean_average = np.array(dropped_column_mean_average)
-#        dropped_column_mean_average[:,1] = dropped_column_mean_average[:,1].astype(float)
-#        dropped_column_mean_average = dropped_column_mean_average[dropped_column_mean_average[:,1].argsort()]
-#        col_name_to_remove =  dropped_column_mean_average[-1][0]
-#        X = X.drop(col_name_to_remove, axis = 1)
-#        mean_average = temp_mean_average
-        
-        
-        
-
-
-
-
-
-
-
