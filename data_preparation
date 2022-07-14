@@ -30,6 +30,70 @@ def add_column_if_value_is_missed(df, category):
     df[new_column_name] = df[category].notnull()
     return df
 
+
+
+#-----HANDLING MISSING HOMEPLANET DATA BY ASSIGNING SAME PLANET BASED ON GROUP
+
+def split_cabin_data (df):
+    df['Cabin'] = df['Cabin'].astype(str)
+    df['DeckNo'] = df['Cabin'].apply(lambda x: x[0] if x !='nan' else np.NaN)
+    df['CabinNo'] = df['Cabin'].apply(
+        lambda x: x[2:-2] if x !='nan' else np.NaN)
+    df['Port'] = df['Cabin'].apply(lambda x: x[-1] if x !='nan' else np.NaN)
+    df.drop(columns = 'Cabin', inplace = True)
+    return df
+
+def add_group_number (df):
+    df['Group'] = df['PassengerId'].apply(lambda x: x[:4])
+    return df
+
+# splitting 'Cabin' number into 'Deck', 'Number' and 'Side'
+df = split_cabin_data(df)
+df = add_group_number(df)
+df2 = split_cabin_data(df2)
+df2 = add_group_number(df2)
+
+homeplanet_group = df.loc[
+    :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
+
+homeplanet_group2 = df2.loc[
+    :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
+
+homeplanet_group = pd.concat([homeplanet_group, homeplanet_group2])
+
+print('nulle przed wypełnianiem kolejno df i df2:')
+print(df.isnull().sum())
+print(df2.isnull().sum())
+
+
+def fill_HomePlanet_by_group (df):
+    for index, row in df.iterrows():
+        group = row['Group']
+        group_list = homeplanet_group['Group'].to_list()
+        if group in group_list:
+            new_home_planet = homeplanet_group.loc[
+                homeplanet_group['Group'] == group].iloc[0]['HomePlanet']
+            df.at[index, 'HomePlanet'] = new_home_planet
+        else:
+            continue
+    return df
+
+
+df_homeplanet_na = df.loc[df['HomePlanet'].isna()]
+df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
+
+
+
+df2_homeplanet_na = df2.loc[df2['HomePlanet'].isna()]
+df2.loc[df2['HomePlanet'].isna()] = fill_HomePlanet_by_group(df2_homeplanet_na)
+
+print('\nnulle po wypełnianiu kolejno df i df2:')
+print(df.isnull().sum())
+print(df2.isnull().sum())
+
+
+#-----------------------------------------------------
+
 # Filling 'HomePlanet', 'Destination', 'VIP', 'Age' NaNs with common values:
     
 categorical_value_to_fill = ['HomePlanet', 'Destination', 'VIP', 'Age']
@@ -43,7 +107,7 @@ for category in categorical_value_to_fill:
 
 
 # Dropping cabin and name column
-columns_to_drop = ['Cabin', 'Name', 'PassengerId']
+columns_to_drop = ['Name']
 df = df.drop(columns = columns_to_drop)
 df2 = df2.drop(columns = columns_to_drop)
 
@@ -157,8 +221,8 @@ for numeric_type in numeric_types:
                 median_spending))
                 
 
-df.to_csv('train_set_processed.csv')
-df2.to_csv('test_set_processed.csv')
+df.to_csv('train_set_processed.csv', index = False)
+df2.to_csv('test_set_processed.csv', index = False)
 
 
           
