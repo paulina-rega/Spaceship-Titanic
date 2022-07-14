@@ -31,6 +31,7 @@ def add_group_number (df):
     df['Group'] = df['PassengerId'].apply(lambda x: x[:4])
     return df
 
+# splitting 'Cabin' number into 'Deck', 'Number' and 'Side'
 df = split_cabin_data(df)
 df = add_group_number(df)
 df2 = split_cabin_data(df2)
@@ -39,7 +40,12 @@ df2 = add_group_number(df2)
 homeplanet_group = df.loc[
     :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
 
-print
+homeplanet_group2 = df2.loc[
+    :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
+
+homeplanet_group = pd.concat([homeplanet_group, homeplanet_group2])
+
+print('nulle przed wypełnianiem kolejno df i df2:')
 print(df.isnull().sum())
 print(df2.isnull().sum())
 
@@ -61,16 +67,13 @@ df_homeplanet_na = df.loc[df['HomePlanet'].isna()]
 df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
 
 
-# Check why df2 HomePlanet if not filled
+
 df2_homeplanet_na = df2.loc[df2['HomePlanet'].isna()]
 df2.loc[df2['HomePlanet'].isna()] = fill_HomePlanet_by_group(df2_homeplanet_na)
 
-
+print('\nnulle po wypełnianiu kolejno df i df2:')
 print(df.isnull().sum())
 print(df2.isnull().sum())
 
 
 #-----------------------------------------------------
-
-
-
