@@ -32,7 +32,9 @@ def add_column_if_value_is_missed(df, category):
 
 
 
-#-----HANDLING MISSING HOMEPLANET DATA BY ASSIGNING SAME PLANET BASED ON GROUP
+#-----------------------------------------------------
+# Filling 'HomePlanet' NaNs with value based on other passengers in
+# the same 'Group':
 
 def split_cabin_data (df):
     df['Cabin'] = df['Cabin'].astype(str)
