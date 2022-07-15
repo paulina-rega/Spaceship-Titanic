@@ -94,52 +94,62 @@ for pair in columns_set_to_plot:
     col1 = pair[0]
     col2 = pair[1]
     #df.plot(x = col1, y = col2)
-    if (df[col1].dtype == 'object' and df[col2].dtype == 'object'):
-        print("both objects")
+    if (df[col1].dtype == 'bool' and df[col2].dtype == 'bool'):
+        print('both bool')
+        print(col1 + '  ' + col2)
+        sns.countplot(binwidth=0.5, x=col2, hue=col1, data=df, stat="count", multiple="stack")
+        plt.show()
+        print("------------------------------------------------------")
+    elif (df[col1].dtype == 'object' and df[col2].dtype == 'object'):
+        print("both objects, plot")
+        print(col1 + '  ' + col2)
         sns.histplot(binwidth=0.5, x=col1, hue=col2, data=df, stat="count", multiple="stack")
         plt.show()
         #write code to plot 
     elif (df[col1].dtype == 'object' and df[col2].dtype == 'bool'):
-        print("1st object, 2nd bool")    
+        print("1st object, 2nd bool")
+        print(col1 + '  ' + col2)
+        sns.histplot(binwidth=0.5, x=col2, hue=col1, data=df, stat="count", multiple="stack")
+        plt.show()
         print("------------------------------------------------------")
     elif (df[col1].dtype == 'object' and df[col2].dtype == 'float64'):
-        df.plot(x=col1, y=col2) #sprawdz czy działa
-        print('1st object, second float')
-    elif (df[col1].dtype == 'bool' and df[col2].dtype == 'bool'):
-        print('both bool')
-        print("------------------------------------------------------")
+        #df.plot(x=col1, y=col2) #sprawdz czy działa
+        print('1st object, second float, plot')
+        sns.catplot(x=col1, y=col2, data=df)
+        plt.show()
+        print(col1 + '  ' + col2)
     elif (df[col1].dtype == 'bool' and df[col2].dtype == 'object'):
         print('1st bool, 2nd object')
+        print(col1 + '  ' + col2)
         print("------------------------------------------------------")
     elif (df[col1].dtype == 'bool' and df[col2].dtype == 'float64'):
         print('1st bool, 2nd float')  
+        print(col1 + '  ' + col2)
         print("------------------------------------------------------")
     elif (df[col1].dtype == 'float64' and df[col2].dtype == 'bool'):
         print('1st float, 2nd bool')
+        print(col1 + '  ' + col2)
+        sns.catplot(x=col2, y=col1, data=df)
+        plt.show()
         print("------------------------------------------------------")
     elif (df[col1].dtype == 'float64' and df[col2].dtype == 'object'):
-        #df.plot.bar(x=col2, y=col1, stacked=True) # NOT WORKING
+        print(col1 + '  ' + col2)
+        sns.catplot(x=col2, y=col1, data=df)
+        plt.show()
         print("------------------------------------------------------")
         print('1st float, 2nd object')
     elif (df[col1].dtype == 'float64' and df[col2].dtype == 'float64'):
         print('both float')
+        print(col1 + '  ' + col2)
         print("------------------------------------------------------")
         df.plot.scatter(x = col1, y = col2)
     else:
         print("ERROR")
-    
 
-            
-    
-
-    
-    
-    
     
 # make double caterogical data (no floats) and plot it)
 
-# Home Planet and DeckNo is related!
-    
+# Home Planet and DeckNo is related!!!
     
     
     
