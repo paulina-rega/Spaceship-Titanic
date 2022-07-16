@@ -3,23 +3,20 @@ Program importing Titanic data and visualising to see patterns to fill NaNs
 
 """
 # Importing libraries 
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Reading train file:
+# Reading data files:
+    
 df = pd.read_csv('train.csv')
 df2 = pd.read_csv('test.csv')
 
-# Cabin - The cabin number where the passenger is staying. 
-# Takes the form deck/num/side, 
-# where side can be either P for Port or S for Starboard.
-
-
-
-#-----HANDLING MISSING HOMEPLANET DATA BY ASSIGNING SAME PLANET BASED ON GROUP
-
+# Declaring functions used for splitting cabin data:
+    
+    
 def split_cabin_data (df):
     df['Cabin'] = df['Cabin'].astype(str)
     df['DeckNo'] = df['Cabin'].apply(lambda x: x[0] if x !='nan' else np.NaN)
@@ -33,7 +30,8 @@ def add_group_number (df):
     df['Group'] = df['PassengerId'].apply(lambda x: x[:4])
     return df
 
-# splitting 'Cabin' number into 'Deck', 'Number' and 'Side'
+
+# Splitting 'Cabin' number into 'Deck', 'Number' and 'Side'
 df = split_cabin_data(df)
 df = add_group_number(df)
 df2 = split_cabin_data(df2)
@@ -47,6 +45,7 @@ homeplanet_group2 = df2.loc[
 
 homeplanet_group = pd.concat([homeplanet_group, homeplanet_group2])
 
+# Declaring functions used for filling HomePlanet NaNs based on Group
 
 
 def fill_HomePlanet_by_group (df):
@@ -62,6 +61,8 @@ def fill_HomePlanet_by_group (df):
     return df
 
 
+# Filling HomePlanet NaNs:
+
 df_homeplanet_na = df.loc[df['HomePlanet'].isna()]
 df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
 
@@ -69,9 +70,7 @@ df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
 df2_homeplanet_na = df2.loc[df2['HomePlanet'].isna()]
 df2.loc[df2['HomePlanet'].isna()] = fill_HomePlanet_by_group(df2_homeplanet_na)
 
-
-#-----------------------------------------------------
-
+# Removing columns related to money spending:
 
 column_names = list(df.columns.values)
 columns_set_to_plot = set()
@@ -91,8 +90,8 @@ for col1 in column_names:
             
             
             
-            
-# Plotting ('DeckNo', 'Destination):
+# Plotting values to see if there are more realtionships between data:
+    
 col1, col2 = 'DeckNo', 'Destination'
 sns.histplot(
     binwidth=0.5, x=col1, hue=col2, data=df, stat="count", multiple="stack")
@@ -226,80 +225,15 @@ col1, col2 = 'Age', 'HomePlanet'
 sns.catplot(x=col2, y=col1, data=df)
 plt.show()
 
-            
-# for pair in columns_set_to_plot:
-#     col1 = pair[0]
-#     col2 = pair[1]
-#     #df.plot(x = col1, y = col2)
-#     if (df[col1].dtype == 'bool' and df[col2].dtype == 'bool'):
-#         print('both bool')
-#         print(col1 + '  ' + col2)
-#         sns.countplot(binwidth=0.5, x=col2, hue=col1, data=df, stat="count", multiple="stack")
-#         plt.show()
-#         print("------------------------------------------------------")
-#     elif (df[col1].dtype == 'object' and df[col2].dtype == 'object'):
-#         print("both objects, plot")
-#         print(col1 + '  ' + col2)
-#         sns.histplot(binwidth=0.5, x=col1, hue=col2, data=df, stat="count", multiple="stack")
-#         plt.show()
-#         #write code to plot 
-#     elif (df[col1].dtype == 'object' and df[col2].dtype == 'bool'):
-#         print("1st object, 2nd bool")
-#         print(col1 + '  ' + col2)
-#         sns.histplot(binwidth=0.5, x=col2, hue=col1, data=df, stat="count", multiple="stack")
-#         plt.show()
-#         print("------------------------------------------------------")
-#     elif (df[col1].dtype == 'object' and df[col2].dtype == 'float64'):
-#         #df.plot(x=col1, y=col2) #sprawdz czy działa
-#         print('1st object, second float, plot')
-#         sns.catplot(x=col1, y=col2, data=df)
-#         plt.show()
-#         print(col1 + '  ' + col2)
-#     elif (df[col1].dtype == 'bool' and df[col2].dtype == 'object'):
-#         print('1st bool, 2nd object')
-#         print(col1 + '  ' + col2)
-#         print("------------------------------------------------------")
-#     elif (df[col1].dtype == 'bool' and df[col2].dtype == 'float64'):
-#         print('1st bool, 2nd float')  
-#         print(col1 + '  ' + col2)
-#         print("------------------------------------------------------")
-#     elif (df[col1].dtype == 'float64' and df[col2].dtype == 'bool'):
-#         print('1st float, 2nd bool')
-#         print(col1 + '  ' + col2)
-#         sns.catplot(x=col2, y=col1, data=df)
-#         plt.show()
-#         print("------------------------------------------------------")
-#     elif (df[col1].dtype == 'float64' and df[col2].dtype == 'object'):
-#         print(col1 + '  ' + col2)
-#         sns.catplot(x=col2, y=col1, data=df)
-#         plt.show()
-#         print("------------------------------------------------------")
-#         print('1st float, 2nd object')
-#     elif (df[col1].dtype == 'float64' and df[col2].dtype == 'float64'):
-#         print('both float')
-#         print(col1 + '  ' + col2)
-#         print("------------------------------------------------------")
-#         df.plot.scatter(x = col1, y = col2)
-#     else:
-#         print("ERROR")
-    
 
-            
-    
 
-    
-    
-    
-    
-# make double caterogical data (no floats) and plot it)
 
-# Home Planet and DeckNo is related!!!
-    
-    
-    
-    
-    
-    
-    
-    
-
+# Meaningful patterns from plots:
+    # all passengers in DeckNo 'A', 'B', 'C', 'T' are from Europa
+    # most passengers from DeckNo 'E', 'F', 'G' are from Earth
+    # most passengers from  DeckNo 'D' are from Mars
+    # most passengers are not VIP
+    # passengers not in CryoSleep are more likely to be trasported
+    # passengers in CryoSleep are less likely to be trasported
+    # tranposrted people are more likely to be in Port 'S'
+    # most passengers are travelling to Trappist-1e
