@@ -138,7 +138,7 @@ def fill_nan_basing_on_other_column(
             df.loc[(df[other_col]==val_to_compare)].fillna(
                 {col_to_fill:val_to_fill}))
     
-    print('\n\n {} NaNs after filling  df & df2 based on {}={}:'.format(
+    print('\n {} NaNs after filling  df & df2 based on {}={}:'.format(
          col_to_fill, other_col, val_to_compare))
     print(df.isnull().sum()[col_to_fill])
     
@@ -153,12 +153,31 @@ df2 = fill_nan_basing_on_other_column(
     df2, 'DeckNo', ['A', 'B', 'C', 'T'], 'HomePlanet', 'Europa')
 
 
-
 # Filling 'HomePlanet' NaNs with 'Earth' for passengers from 'DeckNo' E, F, G:
 df = fill_nan_basing_on_other_column(
     df, 'DeckNo', ['E', 'F', 'G'], 'HomePlanet', 'Earth')
 df2 = fill_nan_basing_on_other_column(
     df2, 'DeckNo', ['E', 'F', 'G'], 'HomePlanet', 'Earth')
+
+
+# Filling 'HomePlanet' NaNs with 'Mars' for passengers from 'DeckNo' D:
+df = fill_nan_basing_on_other_column(df, 'DeckNo', 'D', 'HomePlanet', 'Mars')
+df2 = fill_nan_basing_on_other_column(df2, 'DeckNo', 'D', 'HomePlanet', 'Mars')
+
+# Filling 'Deckno' NaNs with 'G' for passengers from 'HomePlanet' Earth:
+df = fill_nan_basing_on_other_column(df, 'HomePlanet', 'Earth', 'DeckNo', 'G')
+df2 = fill_nan_basing_on_other_column(df2, 'HomePlanet', 'Earth', 'DeckNo', 'G')
+
+# Filling 'Deckno' NaNs with 'B' for passengers from 'HomePlanet' Europa:
+df = fill_nan_basing_on_other_column(
+    df, 'HomePlanet', 'Europa', 'DeckNo', 'B')
+df2 = fill_nan_basing_on_other_column(
+    df2, 'HomePlanet', 'Europa', 'DeckNo', 'B')
+
+# Filling 'DeckNo' NaNs with 'F' for passengers from 'HomePlanet' Mars:
+df = fill_nan_basing_on_other_column(df, 'HomePlanet', 'Mars', 'DeckNo', 'F')
+df2 = fill_nan_basing_on_other_column(df2, 'HomePlanet', 'Mars', 'DeckNo', 'F')
+
 
 
 
