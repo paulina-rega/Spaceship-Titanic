@@ -1,43 +1,97 @@
 
 """
-Program importing Titanic data and preparing for ML algorithm
+Program importing Titanic, filling NaNs and preparing it for ML algorithm
 
 """
 # Importing libraries 
 import pandas as pd
 import numpy as np
-import sys
 
-# Reading train file:
-df = pd.read_csv('train.csv')
-
-# Reading test file:            
+# Reading train and test files:
+df = pd.read_csv('train.csv')            
 df2 = pd.read_csv('test.csv')
 
-# Declaring functions:
+
+# Declaring some functions:
 def find_common_value(col_name):
-    '''takes pd.Series and finds most common value'''
+    '''
+    Fids most common value in Series.
+
+    Parameters
+    ----------
+    col_name : Series
+        Series with categorical data.
+
+    Returns
+    -------
+    common_value : string
+        Most common value in the col_name.
+
+    '''
     common_value = col_name.value_counts().index[0]
     return common_value
 
 
 def fill_nan_with_common_value(col, common_value):
+    '''
+    Fills NaNs in given column with given value
+
+    Parameters
+    ----------
+    col : Series
+        Column to fill NaNs.
+    common_value : object
+        Value to fill column.
+
+    Returns
+    -------
+    col : Series
+        Updated column.
+
+    '''
     col.fillna(common_value, inplace = True)
     return col
 
 
 def add_column_if_value_is_missed(df, category):
+    '''
+    Adding column to DataFrame with information if value in some category was 
+    missing
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame to update
+    category : string
+        Name of the column with missing values.
+
+    Returns
+    -------
+    df : DataFrame
+        DataFrame with added column.
+
+    '''
     new_column_name = 'is' + category + 'Known'
     df[new_column_name] = df[category].notnull()
     return df
 
-
-
-#-----------------------------------------------------
-
-# splitting 'Cabin' number into 'Deck', 'Number' and 'Side'
     
 def split_cabin_data (df):
+    '''
+    Splitting 'Cabin' column into 'Deck', 'Number' and 'Side' and deleting
+    'Cabin' column
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with 'Cabin' column and 'deck/num/side' format.
+
+    Returns
+    -------
+    df : DataFrame
+        DataFrame with new columns.
+
+    '''
     df['Cabin'] = df['Cabin'].astype(str)
     df['DeckNo'] = df['Cabin'].apply(lambda x: x[0] if x !='nan' else np.NaN)
     df['CabinNo'] = df['Cabin'].apply(
@@ -46,10 +100,28 @@ def split_cabin_data (df):
     df.drop(columns = 'Cabin', inplace = True)
     return df
 
+
 def add_group_number (df):
+    '''
+    Adding group number to DataFrame based on passenger ID
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with 'PassengerId' column where first 4 characters are group
+        number
+
+    Returns
+    -------
+    df : DataFrame
+        DataFrame with added 'Group' column
+
+    '''
     df['Group'] = df['PassengerId'].apply(lambda x: x[:4])
     return df
 
+
+# Splitting 'Cabin' number into 'Deck', 'Number' and 'Side':
 
 df = split_cabin_data(df)
 df = add_group_number(df)
@@ -57,6 +129,11 @@ df2 = split_cabin_data(df2)
 df2 = add_group_number(df2)
 
 
+
+
+# Filling 'HomePlanet' NaNs with value based on other passengers in
+# the same 'Group':
+    
 homeplanet_group = df.loc[
     :,['Group', 'HomePlanet']].dropna().drop_duplicates(subset=['Group'])
 
@@ -65,15 +142,23 @@ homeplanet_group2 = df2.loc[
 
 homeplanet_group = pd.concat([homeplanet_group, homeplanet_group2])
 
-print(df.isnull().sum())
-print("loooool")
-print(df2.isnull().sum()['CabinNo'])
-
-
-# Filling 'HomePlanet' NaNs with value based on other passengers in
-# the same 'Group':
 
 def fill_HomePlanet_by_group (df):
+    '''
+    Filling 'HomePlanet' NaNs with value based on other passengers in
+    the same 'Group':
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with 'HomePlanet' label
+
+    Returns
+    -------
+    df : DataFrame
+        Updated DataFrame.
+
+    '''
     for index, row in df.iterrows():
         group = row['Group']
         group_list = homeplanet_group['Group'].to_list()
@@ -89,15 +174,11 @@ def fill_HomePlanet_by_group (df):
 df_homeplanet_na = df.loc[df['HomePlanet'].isna()]
 df.loc[df['HomePlanet'].isna()] = fill_HomePlanet_by_group(df_homeplanet_na)
 
-
-
 df2_homeplanet_na = df2.loc[df2['HomePlanet'].isna()]
 df2.loc[df2['HomePlanet'].isna()] = fill_HomePlanet_by_group(df2_homeplanet_na)
 
-
-
-# declaring function filling NaNs in column based on another column meeting
-# some criteria
+# Declaring function filling NaNs in column based on another column meeting
+# some criteria:
 
 
 def fill_nan_basing_on_other_column(
@@ -159,14 +240,14 @@ df = fill_nan_basing_on_other_column(
 df2 = fill_nan_basing_on_other_column(
     df2, 'DeckNo', ['E', 'F', 'G'], 'HomePlanet', 'Earth')
 
-
 # Filling 'HomePlanet' NaNs with 'Mars' for passengers from 'DeckNo' D:
 df = fill_nan_basing_on_other_column(df, 'DeckNo', 'D', 'HomePlanet', 'Mars')
 df2 = fill_nan_basing_on_other_column(df2, 'DeckNo', 'D', 'HomePlanet', 'Mars')
 
 # Filling 'Deckno' NaNs with 'G' for passengers from 'HomePlanet' Earth:
 df = fill_nan_basing_on_other_column(df, 'HomePlanet', 'Earth', 'DeckNo', 'G')
-df2 = fill_nan_basing_on_other_column(df2, 'HomePlanet', 'Earth', 'DeckNo', 'G')
+df2 = fill_nan_basing_on_other_column(
+    df2, 'HomePlanet', 'Earth', 'DeckNo', 'G')
 
 # Filling 'Deckno' NaNs with 'B' for passengers from 'HomePlanet' Europa:
 df = fill_nan_basing_on_other_column(
@@ -178,33 +259,20 @@ df2 = fill_nan_basing_on_other_column(
 df = fill_nan_basing_on_other_column(df, 'HomePlanet', 'Mars', 'DeckNo', 'F')
 df2 = fill_nan_basing_on_other_column(df2, 'HomePlanet', 'Mars', 'DeckNo', 'F')
 
+# Filling 'Port' NaNs to unknown: 
+df['Port'].fillna('U', inplace=True)
+df2['Port'].fillna('U', inplace=True)
 
+# Dropping 'Name', 'CabinNo' columns
+columns_to_drop = ['Name', 'CabinNo', 'Group']
+df = df.drop(columns = columns_to_drop)
+df2 = df2.drop(columns = columns_to_drop)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sys.exit()
-
-#1----------------------------------------------------------------------------
-# Filling 'HomePlanet', 'Destination', 'VIP', 'Age' NaNs with common values:
+# Filling remaining 'HomePlanet', 'Destination', 'VIP', 'Age' NaNs with 
+# common values:
     
-    
-    
-    
-categorical_value_to_fill = ['HomePlanet', 'Destination', 'VIP', 'Age']
+categorical_value_to_fill = [
+    'HomePlanet', 'Destination', 'VIP', 'Age', 'DeckNo']
 
 for category in categorical_value_to_fill:
     df = add_column_if_value_is_missed(df, category)
@@ -214,11 +282,6 @@ for category in categorical_value_to_fill:
     df2[category] = fill_nan_with_common_value(df[category], common_value)
 
 
-# Dropping 'Name' column
-columns_to_drop = ['Name']
-df = df.drop(columns = columns_to_drop)
-df2 = df2.drop(columns = columns_to_drop)
-
 # Creating a list of venues to spend money in
 types = df.dtypes
 numeric_types = types[types=='float64'].drop('Age').index
@@ -227,38 +290,21 @@ numeric_types = types[types=='float64'].drop('Age').index
 df['SpendingsSum'] = df[numeric_types].sum(axis = 1)
 df2['SpendingsSum'] = df2[numeric_types].sum(axis = 1)
 
-# Plotting spending for passengers by venue
-for i in numeric_types:
-    df.plot.scatter(x = 'Age', y = i)
-
-
-#–-----------------------------------------------------------------------------
-# ---------------------Handling 'CryoSleep' Nans-------------------------------
-
-# Plotting spendings for passengers in CryoSleep (all are zeros):
-df_cryo_sleep  = df[df['CryoSleep'] == True]
-for i in numeric_types:
-    plot_title = "Passengers in 'CryoSleep' state spending in " + i
-    df_cryo_sleep.plot.scatter(
-        x = 'Age', y = i, ylim = (0, 100), title = plot_title) 
-
 # Filling passengers 'CryoSleep' NaNs Based on spendings 
-# (no spendings - 'CryoSllep' is True, some spendings - 'CryoSleep' is False )
+# (no spendings - 'CryoSllep' is True, some spendings - 'CryoSleep' is False ):
+    
 df_nan_sleep = df[df['CryoSleep'].isna()]
 df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] > 0), 'CryoSleep'] = False
 df_nan_sleep.loc[(df_nan_sleep['SpendingsSum'] <= 0), 'CryoSleep'] = True
 df.loc[df_nan_sleep.index, :] = df_nan_sleep[:] 
 
-
 df2_nan_sleep = df2[df2['CryoSleep'].isna()]
 df2_nan_sleep.loc[(df2_nan_sleep['SpendingsSum'] > 0), 'CryoSleep'] = False
 df2_nan_sleep.loc[(df2_nan_sleep['SpendingsSum'] <= 0), 'CryoSleep'] = True
 df2.loc[df2_nan_sleep.index, :] = df2_nan_sleep[:] 
-
-
-
     
-# Filling 'CryoSleep' == True passengers spendings to zero 
+# Filling 'CryoSleep' == True passengers spendings NaNs to zero :
+    
 df.update(df.loc[(df['CryoSleep']==True), numeric_types].fillna(0))
 df2.update(df2.loc[(df2['CryoSleep']==True), numeric_types].fillna(0))
 
@@ -270,8 +316,6 @@ ages_expenses = pd.DataFrame({}, index = ages)
 for i in numeric_types:
     ages_expenses[i]=0
     df[i] = df[i].astype(float)
-#–-----------------------------------------------------------------------------
-# ---------------------Handling Spending NaNs----------------------------------
 
 # Calculating median spendings for groups based on age:
 
@@ -309,9 +353,9 @@ for i in range(len(ages_spending_groups) - 1):
         temp_median = df_temp_age_range[numeric_type].median()
         df_spending_by_age_groups.at[
             beginning_of_age_range, numeric_type] = temp_median
-
         
-# Filling remainging NaNs in spending (based on median spending by age grop)
+# Filling remainging NaNs in spending (based on median spending by age grop):
+    
 num_ranges = len(ages_spending_groups)
 
 for numeric_type in numeric_types:
@@ -328,9 +372,8 @@ for numeric_type in numeric_types:
             (df2['Age'] >= current_range_max_age), numeric_type].fillna(
                 median_spending))
                 
-
+# Exporting data:
+    
 df.to_csv('train_set_processed.csv', index = False)
 df2.to_csv('test_set_processed.csv', index = False)
 
-
-          
