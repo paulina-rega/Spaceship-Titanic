@@ -96,22 +96,78 @@ df2.loc[df2['HomePlanet'].isna()] = fill_HomePlanet_by_group(df2_homeplanet_na)
 
 
 
-# Filling 'HomePlanet' NaNs with 'Europe' for passengers from 'DeckNo'
-# A, B, C, T
-print('\n\n {} NaNs before filling  df & df2 based on {}={}:'.format(
-    'HomePlanet', 'DeckNo', 'Europe'))
-print(df.isnull().sum()['HomePlanet'])
-print(df2.isnull().sum()['HomePlanet'])
-europe_deck = ['A', 'B', 'C', 'T']
-for deck in europe_deck:
-    df.update(
-        df.loc[(df['DeckNo']==deck)].fillna({'HomePlanet':'Europe'}))
-    df2.update(
-        df2.loc[(df2['DeckNo']==deck)].fillna({'HomePlanet':'Europe'}))
+# declaring function filling NaNs in column based on another column meeting
+# some criteria
 
-print('\n {} NaNs after filling  df & df2:'.format('HomePlanet'))
-print(df.isnull().sum()['HomePlanet'])
-print(df2.isnull().sum()['HomePlanet'])
+
+def fill_nan_basing_on_other_column(
+        df, other_col, val_to_compare, col_to_fill, val_to_fill):
+    '''
+    Return DataFrame with filled NaN with given value if value in another
+    column meets condition
+    
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with columns 'other_col' and 'col_to_fill'.
+    other_col : string
+        Label of the another column to check parameter.
+    val_to_compare : string or list of strings
+        Value or list of values of parameter to check in other_col
+    col_to_fill : string
+        Label of the column to fill NaN in.
+    val_to_fill : string
+        Value to fill nan with.
+
+    Returns
+    -------
+    DataFrame
+
+    '''
+    print('\n\n {} NaNs before filling  df & df2 based on {}={}:'.format(
+         col_to_fill, other_col, val_to_compare))
+    print(df.isnull().sum()[col_to_fill])
+    
+
+    if isinstance(val_to_compare, list):
+        for val in val_to_compare:
+            df.update(
+                df.loc[(df[other_col]==val)].fillna({col_to_fill:val_to_fill}))
+    else: 
+        df.update(
+            df.loc[(df[other_col]==val_to_compare)].fillna(
+                {col_to_fill:val_to_fill}))
+    
+    print('\n\n {} NaNs after filling  df & df2 based on {}={}:'.format(
+         col_to_fill, other_col, val_to_compare))
+    print(df.isnull().sum()[col_to_fill])
+    
+    return df
+    
+
+# Filling 'HomePlanet' NaNs with 'Europe' for passengers from 'DeckNo'
+# A, B, C, T:
+df = fill_nan_basing_on_other_column(
+    df, 'DeckNo', ['A', 'B', 'C', 'T'], 'HomePlanet', 'Europa')
+df2 = fill_nan_basing_on_other_column(
+    df2, 'DeckNo', ['A', 'B', 'C', 'T'], 'HomePlanet', 'Europa')
+
+
+
+# Filling 'HomePlanet' NaNs with 'Earth' for passengers from 'DeckNo' E, F, G:
+df = fill_nan_basing_on_other_column(
+    df, 'DeckNo', ['E', 'F', 'G'], 'HomePlanet', 'Earth')
+df2 = fill_nan_basing_on_other_column(
+    df2, 'DeckNo', ['E', 'F', 'G'], 'HomePlanet', 'Earth')
+
+
+
+
+
+
+
+
+
 
 
 
