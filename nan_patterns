@@ -237,3 +237,6 @@ plt.show()
     # passengers in CryoSleep are less likely to be trasported
     # tranposrted people are more likely to be in Port 'S'
     # most passengers are travelling to Trappist-1e
+    # passengers from Earth most likely to be in DeckNo G
+    # passengers from Europa Most likely to be in DeckNo B
+    # passengers from Mars most likely to be in DeckNo F
